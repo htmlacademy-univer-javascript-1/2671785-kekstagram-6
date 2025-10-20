@@ -14,4 +14,16 @@ function isPalindrome(string) {
   return normalizedString === reversedString;
 }
 
+function checkMeetingTime(workStart, workEnd, meetingStart, meetingDuration) {
+  const convertTimeToMinutes = (time) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
 
+  const workStartMinutes = convertTimeToMinutes(workStart);
+  const workEndMinutes = convertTimeToMinutes(workEnd);
+  const meetingStartMinutes = convertTimeToMinutes(meetingStart);
+  const meetingEndMinutes = meetingStartMinutes + meetingDuration;
+
+  return meetingStartMinutes >= workStartMinutes && meetingEndMinutes <= workEndMinutes;
+}
