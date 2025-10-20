@@ -14,3 +14,4 @@ function isPalindrome(string) {
   return normalizedString === reversedString;
 }
 
+
