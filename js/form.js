@@ -1,4 +1,6 @@
 import { initEffects, resetEffects } from './effects.js';
+import { sendData } from './api.js';
+import { showAlert } from './util.js';
 
 const uploadForm = document.querySelector('.img-upload__form');
 const uploadInput = document.querySelector('.img-upload__input');
@@ -6,6 +8,7 @@ const uploadOverlay = document.querySelector('.img-upload__overlay');
 const cancelButton = document.querySelector('.img-upload__cancel');
 const hashtagInput = uploadForm.querySelector('.text__hashtags');
 const commentInput = uploadForm.querySelector('.text__description');
+const submitButton = uploadForm.querySelector('.img-upload__submit');
 const body = document.body;
 
 const pristine = new Pristine(uploadForm, {
@@ -50,6 +53,16 @@ const validateComment = (value) => value.length <= 140;
 pristine.addValidator(hashtagInput, validateHashtags, 'Некорректный хэш-тег');
 pristine.addValidator(commentInput, validateComment, 'Комментарий не более 140 символов');
 
+const blockSubmitButton = () => {
+  submitButton.disabled = true;
+  submitButton.textContent = 'Отправляю...';
+};
+
+const unblockSubmitButton = () => {
+  submitButton.disabled = false;
+  submitButton.textContent = 'Опубликовать';
+};
+
 const openForm = () => {
   uploadOverlay.classList.remove('hidden');
   body.classList.add('modal-open');
@@ -70,14 +83,30 @@ const onEscKeydown = (evt) => {
   }
 };
 
+const onFormSubmit = async (evt) => {
+  evt.preventDefault();
+
+  if (!pristine.validate()) {
+    return;
+  }
+
+  blockSubmitButton();
+
+  try {
+    const formData = new FormData(evt.target);
+    await sendData(formData);
+    closeForm();
+    showAlert('Фотография успешно загружена!');
+  } catch (err) {
+    showAlert(err.message);
+  } finally {
+    unblockSubmitButton();
+  }
+};
+
 uploadInput.addEventListener('change', openForm);
 cancelButton.addEventListener('click', closeForm);
 document.addEventListener('keydown', onEscKeydown);
-
-uploadForm.addEventListener('submit', (evt) => {
-  if (!pristine.validate()) {
-    evt.preventDefault();
-  }
-});
+uploadForm.addEventListener('submit', onFormSubmit);
 
 initEffects();
