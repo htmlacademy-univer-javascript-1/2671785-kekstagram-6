@@ -1,3 +1,5 @@
+import { initEffects, resetEffects } from './effects.js';
+
 const uploadForm = document.querySelector('.img-upload__form');
 const uploadInput = document.querySelector('.img-upload__input');
 const uploadOverlay = document.querySelector('.img-upload__overlay');
@@ -58,6 +60,7 @@ const closeForm = () => {
   body.classList.remove('modal-open');
   uploadForm.reset();
   pristine.reset();
+  resetEffects();
 };
 
 const onEscKeydown = (evt) => {
@@ -76,3 +79,5 @@ uploadForm.addEventListener('submit', (evt) => {
     evt.preventDefault();
   }
 });
+
+initEffects();
