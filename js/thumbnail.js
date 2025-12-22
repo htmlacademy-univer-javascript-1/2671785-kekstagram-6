@@ -1,10 +1,9 @@
-// Функция создания миниатюры
-const createThumbnail = (photo) => {
-  // Находим шаблон
-  const pictureTemplate = document.querySelector('#picture').content;
-  const thumbnail = pictureTemplate.querySelector('.picture').cloneNode(true);
+import { openFullscreen } from './fullscreen.js';
 
-  // Заполняем данные
+const createThumbnail = (photo) => {
+  const template = document.querySelector('#picture');
+  const thumbnail = template.content.querySelector('.picture').cloneNode(true);
+
   const img = thumbnail.querySelector('.picture__img');
   img.src = photo.url;
   img.alt = photo.description;
@@ -12,11 +11,16 @@ const createThumbnail = (photo) => {
   thumbnail.querySelector('.picture__likes').textContent = photo.likes;
   thumbnail.querySelector('.picture__comments').textContent = photo.comments.length;
 
+  thumbnail.addEventListener('click', (evt) => {
+    evt.preventDefault();
+    openFullscreen(photo);
+  });
+
   return thumbnail;
 };
 
-// Функция отрисовки всех миниатюр
 const renderThumbnails = (photos, container) => {
+  container.innerHTML = '';
   const fragment = document.createDocumentFragment();
 
   photos.forEach((photo) => {
