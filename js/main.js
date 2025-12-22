@@ -1,11 +1,18 @@
-import { generatePhotos } from './data.js';
+import { getData } from './api.js';
 import { renderThumbnails } from './thumbnail.js';
+import { showAlert } from './util.js';
 
-// Генерируем данные
-const photos = generatePhotos();
+const getDataSuccess = (photos) => {
+  const picturesContainer = document.querySelector('.pictures');
+  if (picturesContainer) {
+    renderThumbnails(photos, picturesContainer);
+  }
+};
 
-// Находим контейнер для миниатюр
-const picturesContainer = document.querySelector('.pictures');
+const getDataError = (error) => {
+  showAlert(error.message);
+};
 
-// Отрисовываем миниатюры
-renderThumbnails(photos, picturesContainer);
+getData()
+  .then(getDataSuccess)
+  .catch(getDataError);
