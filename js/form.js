@@ -3,12 +3,14 @@ import { sendData } from './api.js';
 import { showAlert } from './util.js';
 
 const uploadForm = document.querySelector('.img-upload__form');
-const uploadInput = document.querySelector('.img-upload__input');
-const uploadOverlay = document.querySelector('.img-upload__overlay');
-const cancelButton = document.querySelector('.img-upload__cancel');
+const uploadInput = uploadForm.querySelector('.img-upload__input');
+const uploadOverlay = uploadForm.querySelector('.img-upload__overlay');
+const cancelButton = uploadForm.querySelector('.img-upload__cancel');
 const hashtagInput = uploadForm.querySelector('.text__hashtags');
 const commentInput = uploadForm.querySelector('.text__description');
 const submitButton = uploadForm.querySelector('.img-upload__submit');
+const previewImage = uploadForm.querySelector('.img-upload__preview img');
+const effectsPreviews = uploadForm.querySelectorAll('.effects__preview');
 const body = document.body;
 
 const pristine = new Pristine(uploadForm, {
@@ -53,6 +55,19 @@ const validateComment = (value) => value.length <= 140;
 pristine.addValidator(hashtagInput, validateHashtags, 'Некорректный хэш-тег');
 pristine.addValidator(commentInput, validateComment, 'Комментарий не более 140 символов');
 
+const showImagePreview = (file) => {
+  const reader = new FileReader();
+
+  reader.addEventListener('load', () => {
+    previewImage.src = reader.result;
+    effectsPreviews.forEach((preview) => {
+      preview.style.backgroundImage = `url(${reader.result})`;
+    });
+  });
+
+  reader.readAsDataURL(file);
+};
+
 const blockSubmitButton = () => {
   submitButton.disabled = true;
   submitButton.textContent = 'Отправляю...';
@@ -64,8 +79,13 @@ const unblockSubmitButton = () => {
 };
 
 const openForm = () => {
-  uploadOverlay.classList.remove('hidden');
-  body.classList.add('modal-open');
+  const file = uploadInput.files[0];
+
+  if (file && file.type.startsWith('image/')) {
+    showImagePreview(file);
+    uploadOverlay.classList.remove('hidden');
+    body.classList.add('modal-open');
+  }
 };
 
 const closeForm = () => {
@@ -74,6 +94,10 @@ const closeForm = () => {
   uploadForm.reset();
   pristine.reset();
   resetEffects();
+  previewImage.src = 'img/upload-default-image.jpg';
+  effectsPreviews.forEach((preview) => {
+    preview.style.backgroundImage = '';
+  });
 };
 
 const onEscKeydown = (evt) => {
