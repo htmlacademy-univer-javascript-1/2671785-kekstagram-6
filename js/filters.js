@@ -1,76 +1,65 @@
 import { renderThumbnails } from './thumbnail.js';
+import { debounce } from './util.js';
 
 const RANDOM_PHOTOS_COUNT = 10;
 const RERENDER_DELAY = 500;
 
 const filtersElement = document.querySelector('.img-filters');
-const filtersForm = filtersElement.querySelector('.img-filters__form');
-const filterButtons = filtersForm.querySelectorAll('.img-filters__button');
+const filtersFormElement = filtersElement.querySelector('.img-filters__form');
 
-let currentFilter = 'filter-default';
-let photos = [];
-
-const showFilters = () => {
-  filtersElement.classList.remove('img-filters--inactive');
+const FilterType = {
+  DEFAULT: 'filter-default',
+  RANDOM: 'filter-random',
+  DISCUSSED: 'filter-discussed',
 };
 
-const getRandomPhotos = () => {
-  const shuffled = [...photos].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, RANDOM_PHOTOS_COUNT);
-};
+let currentFilter = FilterType.DEFAULT;
+let pictures = [];
 
-const getDiscussedPhotos = () => [...photos].sort((a, b) => b.comments.length - a.comments.length);
+const sortRandomly = () => Math.random() - 0.5;
 
-const applyFilter = (filterId) => {
-  let filteredPhotos = [];
+const sortByComments = (photoA, photoB) => photoB.comments.length - photoA.comments.length;
 
-  switch (filterId) {
-    case 'filter-random':
-      filteredPhotos = getRandomPhotos();
-      break;
-    case 'filter-discussed':
-      filteredPhotos = getDiscussedPhotos();
-      break;
+const getFilteredPictures = () => {
+  switch (currentFilter) {
+    case FilterType.RANDOM:
+      return [...pictures].sort(sortRandomly).slice(0, RANDOM_PHOTOS_COUNT);
+    case FilterType.DISCUSSED:
+      return [...pictures].sort(sortByComments);
     default:
-      filteredPhotos = [...photos];
-  }
-
-  const picturesContainer = document.querySelector('.pictures');
-  if (picturesContainer) {
-    picturesContainer.querySelectorAll('.picture').forEach((picture) => picture.remove());
-    renderThumbnails(filteredPhotos, picturesContainer);
+      return [...pictures];
   }
 };
 
-const debounce = (callback, timeoutDelay) => {
-  let timeoutId;
-  return (...rest) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => callback.apply(this, rest), timeoutDelay);
-  };
+const updateActiveButton = (clickedButton) => {
+  const currentActiveButton = filtersFormElement.querySelector('.img-filters__button--active');
+  if (currentActiveButton) {
+    currentActiveButton.classList.remove('img-filters__button--active');
+  }
+  clickedButton.classList.add('img-filters__button--active');
 };
 
-const onFilterChange = debounce((evt) => {
+const debouncedRender = debounce((filteredPictures) => {
+  renderThumbnails(filteredPictures);
+}, RERENDER_DELAY);
+
+const onFilterClick = (evt) => {
   const clickedButton = evt.target;
-
-  if (clickedButton.tagName !== 'BUTTON' || clickedButton.id === currentFilter) {
+  if (!clickedButton.classList.contains('img-filters__button')) {
     return;
   }
 
-  filterButtons.forEach((button) => {
-    button.classList.remove('img-filters__button--active');
-  });
+  if (clickedButton.id === currentFilter) {
+    return;
+  }
 
-  clickedButton.classList.add('img-filters__button--active');
   currentFilter = clickedButton.id;
-
-  applyFilter(currentFilter);
-}, RERENDER_DELAY);
-
-const initFilters = (loadedPhotos) => {
-  photos = loadedPhotos;
-  showFilters();
-  filtersForm.addEventListener('click', onFilterChange);
+  updateActiveButton(clickedButton);
+  debouncedRender(getFilteredPictures());
 };
 
-export { initFilters };
+export const initFilters = (loadedPictures) => {
+  pictures = loadedPictures;
+  filtersElement.classList.remove('img-filters--inactive');
+  filtersFormElement.addEventListener('click', onFilterClick);
+};
