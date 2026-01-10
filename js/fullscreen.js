@@ -19,6 +19,7 @@ const createComment = (comment) => {
   return commentElement;
 };
 
+
 const showCommentsPage = () => {
   const commentsToShow = currentPhoto.comments.slice(shownComments, shownComments + COMMENTS_PER_PAGE);
 
@@ -27,9 +28,7 @@ const showCommentsPage = () => {
   });
 
   shownComments += commentsToShow.length;
-
   commentsCount.innerHTML = `${shownComments} из <span class="comments-count">${currentPhoto.comments.length}</span> комментариев`;
-
   if (shownComments >= currentPhoto.comments.length) {
     commentsLoader.classList.add('hidden');
   }

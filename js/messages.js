@@ -1,46 +1,45 @@
-const isEscapeKey = (evt) => evt.key === 'Escape';
+import { isEscapeKey } from './util.js';
 
-const showMessage = (templateId, closeButtonClass) => {
-  const template = document.querySelector(`#${templateId}`);
-  const messageElement = template.content.cloneNode(true).querySelector(`.${templateId}`);
-  const closeButton = messageElement.querySelector(closeButtonClass);
+const successTemplate = document.querySelector('#success').content.querySelector('.success');
+const errorTemplate = document.querySelector('#error').content.querySelector('.error');
+
+const showMessage = (template, buttonClass) => {
+  const messageElement = template.cloneNode(true);
+  const button = messageElement.querySelector(buttonClass);
+
+  document.body.append(messageElement);
+
+  const onMessageEscKeydown = (evt) => {
+    if (isEscapeKey(evt)) {
+      evt.preventDefault();
+      evt.stopPropagation();
+      button.click();
+    }
+  };
+
+  const onOutsideClick = (evt) => {
+    if (evt.target === messageElement) {
+      button.click();
+    }
+  };
 
   const closeMessage = () => {
     messageElement.remove();
-    document.removeEventListener('keydown', onDocumentKeydown);
-    document.removeEventListener('click', onDocumentClick);
+    document.removeEventListener('keydown', onMessageEscKeydown);
+    document.removeEventListener('click', onOutsideClick);
   };
 
-  const onDocumentClick = (evt) => {
-    if (!messageElement.contains(evt.target)) {
-      closeMessage();
-    }
-  };
-
-  const onDocumentKeydown = (evt) => {
-    if (isEscapeKey(evt)) {
-      evt.preventDefault();
-      closeMessage();
-    }
-  };
-
-  const onCloseButtonClick = () => {
-    closeMessage();
-  };
-
-  closeButton.addEventListener('click', onCloseButtonClick);
-  document.addEventListener('keydown', onDocumentKeydown);
-  document.addEventListener('click', onDocumentClick);
-
-  document.body.append(messageElement);
+  button.addEventListener('click', closeMessage);
+  document.addEventListener('keydown', onMessageEscKeydown);
+  document.addEventListener('click', onOutsideClick);
 };
 
-const showSuccess = () => {
-  showMessage('success', '.success__button');
+const showSuccessMessage = () => {
+  showMessage(successTemplate, '.success__button');
 };
 
-const showError = () => {
-  showMessage('error', '.error__button');
+const showErrorMessage = () => {
+  showMessage(errorTemplate, '.error__button');
 };
 
-export { showSuccess, showError };
+export { showSuccessMessage, showErrorMessage };
