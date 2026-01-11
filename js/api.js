@@ -1,39 +1,37 @@
+<<<<<<< HEAD
 const BASE_URL = 'https://32.javascript.htmlacademy.pro/kekstagram';
+=======
+const SERVER_URL = 'https://29.javascript.htmlacademy.pro/kekstagram';
+>>>>>>> module12-fix
 
-const Route = {
-  GET_DATA: '/data',
-  SEND_DATA: '/'
-};
-
-const Method = {
-  GET: 'GET',
-  POST: 'POST'
-};
-
-const ErrorText = {
-  GET_DATA: 'Не удалось загрузить данные. Попробуйте обновить страницу',
-  SEND_DATA: 'Не удалось отправить форму. Попробуйте ещё раз'
-};
-
-const load = async (route, errorText, method = Method.GET, body = null) => {
+const getData = async (onSuccess, onFail) => {
   try {
-    const response = await fetch(`${BASE_URL}${route}`, {
-      method,
-      body
-    });
-
+    const response = await fetch(`${SERVER_URL}/data`);
     if (!response.ok) {
-      throw new Error();
+      throw new Error(`${response.status} ${response.statusText}`);
     }
-
-    return await response.json();
+    const data = await response.json();
+    onSuccess(data);
   } catch (error) {
-    throw new Error(errorText);
+    onFail();
   }
 };
 
-const getData = () => load(Route.GET_DATA, ErrorText.GET_DATA);
+const sendData = async (onSuccess, onFail, body) => {
+  try {
+    const response = await fetch(`${SERVER_URL}/`, {
+      method: 'POST',
+      body,
+    });
 
-const sendData = (body) => load(Route.SEND_DATA, ErrorText.SEND_DATA, Method.POST, body);
+    if (response.ok) {
+      onSuccess();
+    } else {
+      onFail();
+    }
+  } catch (error) {
+    onFail();
+  }
+};
 
 export { getData, sendData };
