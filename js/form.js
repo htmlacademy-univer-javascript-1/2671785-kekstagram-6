@@ -4,6 +4,7 @@ import { resetEffects, initEffects } from './effects.js';
 import { sendData } from './api.js';
 import { showSuccessMessage, showErrorMessage } from './messages.js';
 
+<<<<<<< Updated upstream
 const MAX_HASHTAGS_COUNT = 5;
 const MAX_COMMENT_LENGTH = 140;
 const VALID_HASHTAG_REGEX = /^#[a-zа-яё0-9]{1,19}$/i;
@@ -13,6 +14,15 @@ const formElement = document.querySelector('.img-upload__form');
 const imageUploadOverlay = document.querySelector('.img-upload__overlay');
 const fileField = document.querySelector('#upload-file');
 const cancelButton = document.querySelector('#upload-cancel');
+=======
+const uploadForm = document.querySelector('.img-upload__form');
+const uploadInput = document.querySelector('.img-upload__input');
+const uploadOverlay = document.querySelector('.img-upload__overlay');
+const cancelButton = document.querySelector('.img-upload__cancel');
+const hashtagInput = uploadForm.querySelector('.text__hashtags');
+const commentInput = uploadForm.querySelector('.text__description');
+const submitButton = uploadForm.querySelector('.img-upload__submit');
+>>>>>>> Stashed changes
 const body = document.body;
 const photoPreview = document.querySelector('.img-upload__preview img');
 const effectsPreviews = document.querySelectorAll('.effects__preview');
@@ -51,6 +61,7 @@ const validateHashtagsFormat = (value) => {
   return !hashtags.some((hashtag) => !VALID_HASHTAG_REGEX.test(hashtag));
 };
 
+<<<<<<< Updated upstream
 const validateNonEmptyHashtag = (value) => {
   if (!value) {
     return true;
@@ -76,6 +87,8 @@ const onFieldKeydown = (evt) => {
   }
 };
 
+=======
+>>>>>>> Stashed changes
 const blockSubmitButton = () => {
   if (submitButton) {
     submitButton.disabled = true;
@@ -84,6 +97,7 @@ const blockSubmitButton = () => {
 };
 
 const unblockSubmitButton = () => {
+<<<<<<< Updated upstream
   if (submitButton) {
     submitButton.disabled = false;
     submitButton.textContent = 'Опубликовать';
@@ -92,6 +106,36 @@ const unblockSubmitButton = () => {
 
 const onFormEscKeydown = (evt) => {
   if (document.activeElement === hashtagsField || document.activeElement === commentField) {
+=======
+  submitButton.disabled = false;
+  submitButton.textContent = 'Опубликовать';
+};
+
+const openForm = () => {
+  uploadOverlay.classList.remove('hidden');
+  body.classList.add('modal-open');
+};
+
+const closeForm = () => {
+  uploadOverlay.classList.add('hidden');
+  body.classList.remove('modal-open');
+  uploadForm.reset();
+  pristine.reset();
+  resetEffects();
+};
+
+const onEscKeydown = (evt) => {
+  if (evt.key === 'Escape' && !hashtagInput.matches(':focus') && !commentInput.matches(':focus')) {
+    evt.preventDefault();
+    closeForm();
+  }
+};
+
+const onFormSubmit = async (evt) => {
+  evt.preventDefault();
+
+  if (!pristine.validate()) {
+>>>>>>> Stashed changes
     return;
   }
 
