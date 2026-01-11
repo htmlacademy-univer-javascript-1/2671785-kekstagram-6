@@ -38,25 +38,15 @@ const createCommentElement = (comment) => {
   return commentElement;
 };
 
-<<<<<<< HEAD
-=======
-<<<<<<< Updated upstream
 const renderCommentsPortion = (initial = false) => {
   if (initial) {
     commentsContainer.innerHTML = '';
     displayedComments = 0;
   }
-=======
-
->>>>>>> module12-fix
-const showCommentsPage = () => {
-  const commentsToShow = currentPhoto.comments.slice(shownComments, shownComments + COMMENTS_PER_PAGE);
->>>>>>> Stashed changes
 
   const fragment = document.createDocumentFragment();
   const commentsToShow = Math.min(displayedComments + COMMENTS_PER_PORTION, currentComments.length);
 
-<<<<<<< Updated upstream
   for (let i = displayedComments; i < commentsToShow; i++) {
     const commentElement = createCommentElement(currentComments[i]);
     fragment.appendChild(commentElement);
@@ -71,14 +61,6 @@ const showCommentsPage = () => {
     commentsLoaderElement.classList.add('hidden');
   } else {
     commentsLoaderElement.classList.remove('hidden');
-=======
-  shownComments += commentsToShow.length;
-
-  commentsCount.innerHTML = `${shownComments} из <span class="comments-count">${currentPhoto.comments.length}</span> комментариев`;
-
-  if (shownComments >= currentPhoto.comments.length) {
-    commentsLoader.classList.add('hidden');
->>>>>>> Stashed changes
   }
 };
 

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-const BASE_URL = 'https://32.javascript.htmlacademy.pro/kekstagram';
-=======
 const SERVER_URL = 'https://29.javascript.htmlacademy.pro/kekstagram';
->>>>>>> module12-fix
 
 const getData = async (onSuccess, onFail) => {
   try {

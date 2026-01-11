@@ -4,7 +4,6 @@ import { resetEffects, initEffects } from './effects.js';
 import { sendData } from './api.js';
 import { showSuccessMessage, showErrorMessage } from './messages.js';
 
-<<<<<<< Updated upstream
 const MAX_HASHTAGS_COUNT = 5;
 const MAX_COMMENT_LENGTH = 140;
 const VALID_HASHTAG_REGEX = /^#[a-zа-яё0-9]{1,19}$/i;
@@ -14,20 +13,6 @@ const formElement = document.querySelector('.img-upload__form');
 const imageUploadOverlay = document.querySelector('.img-upload__overlay');
 const fileField = document.querySelector('#upload-file');
 const cancelButton = document.querySelector('#upload-cancel');
-=======
-const uploadForm = document.querySelector('.img-upload__form');
-const uploadInput = uploadForm.querySelector('.img-upload__input');
-const uploadOverlay = uploadForm.querySelector('.img-upload__overlay');
-const cancelButton = uploadForm.querySelector('.img-upload__cancel');
-const hashtagInput = uploadForm.querySelector('.text__hashtags');
-const commentInput = uploadForm.querySelector('.text__description');
-const submitButton = uploadForm.querySelector('.img-upload__submit');
-<<<<<<< HEAD
-const previewImage = uploadForm.querySelector('.img-upload__preview img');
-const effectsPreviews = uploadForm.querySelectorAll('.effects__preview');
-=======
->>>>>>> Stashed changes
->>>>>>> module12-fix
 const body = document.body;
 const photoPreview = document.querySelector('.img-upload__preview img');
 const effectsPreviews = document.querySelectorAll('.effects__preview');
@@ -66,22 +51,6 @@ const validateHashtagsFormat = (value) => {
   return !hashtags.some((hashtag) => !VALID_HASHTAG_REGEX.test(hashtag));
 };
 
-<<<<<<< HEAD
-const showImagePreview = (file) => {
-  const reader = new FileReader();
-
-  reader.addEventListener('load', () => {
-    previewImage.src = reader.result;
-    effectsPreviews.forEach((preview) => {
-      preview.style.backgroundImage = `url(${reader.result})`;
-    });
-  });
-
-  reader.readAsDataURL(file);
-};
-
-=======
-<<<<<<< Updated upstream
 const validateNonEmptyHashtag = (value) => {
   if (!value) {
     return true;
@@ -107,9 +76,6 @@ const onFieldKeydown = (evt) => {
   }
 };
 
-=======
->>>>>>> Stashed changes
->>>>>>> module12-fix
 const blockSubmitButton = () => {
   if (submitButton) {
     submitButton.disabled = true;
@@ -118,7 +84,6 @@ const blockSubmitButton = () => {
 };
 
 const unblockSubmitButton = () => {
-<<<<<<< Updated upstream
   if (submitButton) {
     submitButton.disabled = false;
     submitButton.textContent = 'Опубликовать';
@@ -127,45 +92,6 @@ const unblockSubmitButton = () => {
 
 const onFormEscKeydown = (evt) => {
   if (document.activeElement === hashtagsField || document.activeElement === commentField) {
-=======
-  submitButton.disabled = false;
-  submitButton.textContent = 'Опубликовать';
-};
-
-const openForm = () => {
-  const file = uploadInput.files[0];
-
-  if (file && file.type.startsWith('image/')) {
-    showImagePreview(file);
-    uploadOverlay.classList.remove('hidden');
-    body.classList.add('modal-open');
-  }
-};
-
-const closeForm = () => {
-  uploadOverlay.classList.add('hidden');
-  body.classList.remove('modal-open');
-  uploadForm.reset();
-  pristine.reset();
-  resetEffects();
-  previewImage.src = 'img/upload-default-image.jpg';
-  effectsPreviews.forEach((preview) => {
-    preview.style.backgroundImage = '';
-  });
-};
-
-const onEscKeydown = (evt) => {
-  if (evt.key === 'Escape' && !hashtagInput.matches(':focus') && !commentInput.matches(':focus')) {
-    evt.preventDefault();
-    closeForm();
-  }
-};
-
-const onFormSubmit = async (evt) => {
-  evt.preventDefault();
-
-  if (!pristine.validate()) {
->>>>>>> Stashed changes
     return;
   }
 
