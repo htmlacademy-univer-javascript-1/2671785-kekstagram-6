@@ -1,136 +1,250 @@
-import { initEffects, resetEffects } from './effects.js';
+import { isEscapeKey } from './util.js';
+import { resetScale, initScale } from './scale.js';
+import { resetEffects, initEffects } from './effects.js';
 import { sendData } from './api.js';
-import { showAlert } from './util.js';
+import { showSuccessMessage, showErrorMessage } from './messages.js';
 
-const uploadForm = document.querySelector('.img-upload__form');
-const uploadInput = uploadForm.querySelector('.img-upload__input');
-const uploadOverlay = uploadForm.querySelector('.img-upload__overlay');
-const cancelButton = uploadForm.querySelector('.img-upload__cancel');
-const hashtagInput = uploadForm.querySelector('.text__hashtags');
-const commentInput = uploadForm.querySelector('.text__description');
-const submitButton = uploadForm.querySelector('.img-upload__submit');
-const previewImage = uploadForm.querySelector('.img-upload__preview img');
-const effectsPreviews = uploadForm.querySelectorAll('.effects__preview');
+const MAX_HASHTAGS_COUNT = 5;
+const MAX_COMMENT_LENGTH = 140;
+const VALID_HASHTAG_REGEX = /^#[a-zа-яё0-9]{1,19}$/i;
+const FILE_TYPES = ['jpg', 'jpeg', 'png'];
+
+const formElement = document.querySelector('.img-upload__form');
+const imageUploadOverlay = document.querySelector('.img-upload__overlay');
+const fileField = document.querySelector('#upload-file');
+const cancelButton = document.querySelector('#upload-cancel');
 const body = document.body;
+const photoPreview = document.querySelector('.img-upload__preview img');
+const effectsPreviews = document.querySelectorAll('.effects__preview');
 
-const pristine = new Pristine(uploadForm, {
-  classTo: 'img-upload__field-wrapper',
-  errorClass: 'img-upload__field-wrapper--invalid',
-  successClass: 'img-upload__field-wrapper--valid',
-  errorTextParent: 'img-upload__field-wrapper',
-  errorTextTag: 'div',
-  errorTextClass: 'img-upload__error-text'
-});
+let hashtagsField = null;
+let commentField = null;
+let submitButton = null;
 
-const validateHashtags = (value) => {
-  if (value.trim() === '') {
-    return true;
-  }
+let pristine = null;
 
-  const hashtags = value.toLowerCase().split(' ').filter(Boolean);
-
-  if (hashtags.length > 5) {
+const findFormElements = () => {
+  if (!formElement) {
     return false;
   }
 
-  const hashtagRegex = /^#[a-zа-яё0-9]{1,19}$/i;
+  hashtagsField = formElement.querySelector('.text__hashtags');
+  commentField = formElement.querySelector('.text__description');
+  submitButton = formElement.querySelector('.img-upload__submit');
 
-  for (let i = 0; i < hashtags.length; i++) {
-    const hashtag = hashtags[i];
-
-    if (!hashtagRegex.test(hashtag)) {
-      return false;
-    }
-
-    if (hashtags.indexOf(hashtag) !== i) {
-      return false;
-    }
-  }
-
-  return true;
+  return hashtagsField && commentField && submitButton;
 };
 
-const validateComment = (value) => value.length <= 140;
+const validateHashtagsCount = (value) => {
+  if (!value) {
+    return true;
+  }
+  const hashtags = value.trim().split(/\s+/).filter((item) => item.length > 0);
+  return hashtags.length <= MAX_HASHTAGS_COUNT;
+};
 
-pristine.addValidator(hashtagInput, validateHashtags, 'Некорректный хэш-тег');
-pristine.addValidator(commentInput, validateComment, 'Комментарий не более 140 символов');
+const validateHashtagsFormat = (value) => {
+  if (!value) {
+    return true;
+  }
+  const hashtags = value.trim().split(/\s+/).filter((item) => item.length > 0);
+  return !hashtags.some((hashtag) => !VALID_HASHTAG_REGEX.test(hashtag));
+};
 
-const showImagePreview = (file) => {
-  const reader = new FileReader();
+const validateNonEmptyHashtag = (value) => {
+  if (!value) {
+    return true;
+  }
+  const hashtags = value.trim().split(/\s+/).filter((item) => item.length > 0);
+  return !hashtags.some((hashtag) => hashtag === '#');
+};
 
-  reader.addEventListener('load', () => {
-    previewImage.src = reader.result;
-    effectsPreviews.forEach((preview) => {
-      preview.style.backgroundImage = `url(${reader.result})`;
-    });
-  });
+const validateHashtagsUnique = (value) => {
+  if (!value) {
+    return true;
+  }
+  const hashtags = value.trim().split(/\s+/).filter((item) => item.length > 0);
+  const uniqueHashtags = new Set(hashtags.map((hashtag) => hashtag.toLowerCase()));
+  return uniqueHashtags.size === hashtags.length;
+};
 
-  reader.readAsDataURL(file);
+const validateComment = (value) => !value || value.length <= MAX_COMMENT_LENGTH;
+
+const onFieldKeydown = (evt) => {
+  if (isEscapeKey(evt)) {
+    evt.stopPropagation();
+  }
 };
 
 const blockSubmitButton = () => {
-  submitButton.disabled = true;
-  submitButton.textContent = 'Отправляю...';
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.textContent = 'Публикую...';
+  }
 };
 
 const unblockSubmitButton = () => {
-  submitButton.disabled = false;
-  submitButton.textContent = 'Опубликовать';
-};
-
-const openForm = () => {
-  const file = uploadInput.files[0];
-
-  if (file && file.type.startsWith('image/')) {
-    showImagePreview(file);
-    uploadOverlay.classList.remove('hidden');
-    body.classList.add('modal-open');
+  if (submitButton) {
+    submitButton.disabled = false;
+    submitButton.textContent = 'Опубликовать';
   }
 };
 
-const closeForm = () => {
-  uploadOverlay.classList.add('hidden');
-  body.classList.remove('modal-open');
-  uploadForm.reset();
-  pristine.reset();
-  resetEffects();
-  previewImage.src = 'img/upload-default-image.jpg';
-  effectsPreviews.forEach((preview) => {
-    preview.style.backgroundImage = '';
-  });
-};
-
-const onEscKeydown = (evt) => {
-  if (evt.key === 'Escape' && !hashtagInput.matches(':focus') && !commentInput.matches(':focus')) {
-    evt.preventDefault();
-    closeForm();
-  }
-};
-
-const onFormSubmit = async (evt) => {
-  evt.preventDefault();
-
-  if (!pristine.validate()) {
+const onFormEscKeydown = (evt) => {
+  if (document.activeElement === hashtagsField || document.activeElement === commentField) {
     return;
   }
 
-  blockSubmitButton();
+  if (document.querySelector('.error')) {
+    return;
+  }
 
-  try {
-    const formData = new FormData(evt.target);
-    await sendData(formData);
-    closeForm();
-    showAlert('Фотография успешно загружена!');
-  } catch (err) {
-    showAlert(err.message);
-  } finally {
-    unblockSubmitButton();
+  if (isEscapeKey(evt)) {
+    evt.preventDefault();
+    cancelButton.click();
   }
 };
 
-uploadInput.addEventListener('change', openForm);
-cancelButton.addEventListener('click', closeForm);
-document.addEventListener('keydown', onEscKeydown);
-uploadForm.addEventListener('submit', onFormSubmit);
+const closeImageUploadOverlay = () => {
+  formElement.reset();
+  if (pristine) {
+    pristine.reset();
+  }
+  resetScale();
+  resetEffects();
+  imageUploadOverlay.classList.add('hidden');
+  body.classList.remove('modal-open');
 
-initEffects();
+  document.removeEventListener('keydown', onFormEscKeydown);
+  cancelButton.removeEventListener('click', closeImageUploadOverlay);
+};
+
+const openImageUploadOverlay = () => {
+  if (!imageUploadOverlay || !cancelButton) {
+    return;
+  }
+
+  imageUploadOverlay.classList.remove('hidden');
+  body.classList.add('modal-open');
+  document.addEventListener('keydown', onFormEscKeydown);
+  cancelButton.addEventListener('click', closeImageUploadOverlay);
+};
+
+const onFileFieldChange = () => {
+  const file = fileField.files[0];
+  const fileName = file.name.toLowerCase();
+
+  const matches = FILE_TYPES.some((it) => fileName.endsWith(it));
+
+  if (matches) {
+    photoPreview.src = URL.createObjectURL(file);
+    effectsPreviews.forEach((preview) => {
+      preview.style.backgroundImage = `url(${photoPreview.src})`;
+    });
+    openImageUploadOverlay();
+  }
+};
+
+const initFormValidation = () => {
+  if (!formElement || !hashtagsField || !commentField) {
+    return;
+  }
+
+  if (typeof window.Pristine !== 'function') {
+    return;
+  }
+
+  if (pristine) {
+    pristine.destroy();
+  }
+
+  pristine = new window.Pristine(formElement, {
+    classTo: 'img-upload__field-wrapper',
+    errorTextParent: 'img-upload__field-wrapper',
+    errorTextTag: 'div',
+    errorTextClass: 'img-upload__error'
+  });
+
+  pristine.addValidator(
+    hashtagsField,
+    validateHashtagsCount,
+    `Нельзя указать больше ${MAX_HASHTAGS_COUNT} хэш-тегов`
+  );
+
+  pristine.addValidator(
+    hashtagsField,
+    validateHashtagsFormat,
+    'Хэш-тег должен начинаться с # и содержать только буквы и цифры (до 20 символов)'
+  );
+
+  pristine.addValidator(
+    hashtagsField,
+    validateHashtagsUnique,
+    'Хэш-теги не должны повторяться'
+  );
+
+  pristine.addValidator(
+    hashtagsField,
+    validateNonEmptyHashtag,
+    'Хэш-тег не может состоять только из символа #'
+  );
+
+  pristine.addValidator(
+    commentField,
+    validateComment,
+    `Длина комментария не должна превышать ${MAX_COMMENT_LENGTH} символов`
+  );
+
+  formElement.addEventListener('submit', (evt) => {
+    evt.preventDefault();
+
+    const isValid = pristine.validate();
+
+    if (isValid) {
+      blockSubmitButton();
+      sendData(
+        () => {
+          closeImageUploadOverlay();
+          showSuccessMessage();
+          unblockSubmitButton();
+        },
+        () => {
+          showErrorMessage();
+          unblockSubmitButton();
+        },
+        new FormData(evt.target)
+      );
+    }
+  });
+};
+
+const setupAccessibility = () => {
+  if (!hashtagsField || !commentField) {
+    return;
+  }
+  hashtagsField.setAttribute('aria-describedby', 'hashtags-error');
+  commentField.setAttribute('aria-describedby', 'comment-error');
+};
+
+const initImageUploadForm = () => {
+  if (!formElement || !fileField) {
+    return;
+  }
+
+  if (!findFormElements()) {
+    return;
+  }
+
+  setupAccessibility();
+
+  fileField.addEventListener('change', onFileFieldChange);
+
+  hashtagsField.addEventListener('keydown', onFieldKeydown);
+  commentField.addEventListener('keydown', onFieldKeydown);
+
+  initScale();
+  initEffects();
+  initFormValidation();
+};
+
+export { initImageUploadForm };

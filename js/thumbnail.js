@@ -1,26 +1,31 @@
-import { openFullscreen } from './fullscreen.js';
+import { showBigPicture } from './fullscreen.js';
+
+const picturesContainer = document.querySelector('.pictures');
+
+const pictureTemplate = document.querySelector('#picture').content.querySelector('.picture');
 
 const createThumbnail = (photo) => {
-  const template = document.querySelector('#picture');
-  const thumbnail = template.content.querySelector('.picture').cloneNode(true);
+  const pictureElement = pictureTemplate.cloneNode(true);
 
-  const img = thumbnail.querySelector('.picture__img');
+  const img = pictureElement.querySelector('.picture__img');
   img.src = photo.url;
   img.alt = photo.description;
 
-  thumbnail.querySelector('.picture__likes').textContent = photo.likes;
-  thumbnail.querySelector('.picture__comments').textContent = photo.comments.length;
+  pictureElement.querySelector('.picture__likes').textContent = photo.likes;
+  pictureElement.querySelector('.picture__comments').textContent = photo.comments.length;
 
-  thumbnail.addEventListener('click', (evt) => {
+  pictureElement.addEventListener('click', (evt) => {
     evt.preventDefault();
-    openFullscreen(photo);
+    showBigPicture(photo);
   });
 
-  return thumbnail;
+  return pictureElement;
 };
 
-const renderThumbnails = (photos, container) => {
-  container.innerHTML = '';
+const renderThumbnails = (photos) => {
+  const pictures = picturesContainer.querySelectorAll('.picture');
+  pictures.forEach((picture) => picture.remove());
+
   const fragment = document.createDocumentFragment();
 
   photos.forEach((photo) => {
@@ -28,7 +33,7 @@ const renderThumbnails = (photos, container) => {
     fragment.appendChild(thumbnail);
   });
 
-  container.appendChild(fragment);
+  picturesContainer.appendChild(fragment);
 };
 
 export { renderThumbnails };
